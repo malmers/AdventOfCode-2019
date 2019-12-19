@@ -1,0 +1,11 @@
+[package]
+name = "day01"
+version = "0.1.0"
+authors = ["Pontus Malm <malm@chalmers.it>"]
+edition = "2018"
+
+[dependencies]
+
+[[bin]]
+name = "part1"
+path = "src/part1.rs"
