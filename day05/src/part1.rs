@@ -1,10 +1,14 @@
+use std::io;
+
 fn main() {
     let input = include_str!("../input");
-    let opcodes: Vec<usize> = input.split(',').map(|x| x.parse().unwrap()).collect();
-    find(opcodes);
+    let opcodes: Vec<isize> = input.split(',').map(|x| x.parse().unwrap()).collect();
+    println!("{:?}", opcodes);
+    // find(opcodes);
+    run(opcodes, 0);
 }
 
-fn find(mut opcodes: Vec<usize>) {
+fn find(mut opcodes: Vec<isize>) {
     for i in 0..100 {
         for j in 0..100 {
             opcodes[1] = i;
@@ -17,59 +21,84 @@ fn find(mut opcodes: Vec<usize>) {
     }
 }
 
-fn run(mut codes: Vec<usize>, mut pos: usize) -> usize {
+fn run(mut codes: Vec<isize>, position: usize) -> isize {
+    let mut pos = position;
     loop {
         let code_string = format!("{:0>4}", codes[pos].to_string());
         let (modes, opcode) = code_string.split_at(code_string.len() - 2);
         match opcode {
-            "01" => add(&mut codes, pos, modes),
-            "02" => mul(&mut codes, pos, modes),
+            "01" => add(&mut codes, &mut pos, modes),
+            "02" => mul(&mut codes, &mut pos, modes),
+            "03" => input(&mut codes, &mut pos),
+            "04" => output(&mut codes, &mut pos),
             "99" => return codes[0],
             _ => {
                 println!("{:?}", opcode);
                 panic!("That opcode is not implemented!");
             }
         }
-        pos += 4;
     }
 }
 
-fn add(codes: &mut Vec<usize>, pos: usize, modes_string: &str) {
+fn add(codes: &mut Vec<isize>, pos: &mut usize, modes_string: &str) {
     let modes: usize = modes_string.parse().unwrap();
     let mode_a = modes & 0b1;
     let mode_b = modes & 0b10;
-    let a: usize = match mode_a {
-        0 => codes[codes[pos + 1]],
-        _ => codes[pos + 1],
+    let a: isize = match mode_a {
+        0 => codes[codes[*pos + 1] as usize],
+        _ => codes[*pos + 1],
     };
 
-    let b: usize = match mode_b {
-        0 => codes[codes[pos + 2]],
-        _ => codes[pos + 2],
+    let b: isize = match mode_b {
+        0 => codes[codes[*pos + 2] as usize],
+        _ => codes[*pos + 2],
     };
-    let target = codes[pos + 3];
+    let target = codes[*pos + 3] as usize;
+    *pos += 4;
     codes[target] = a + b;
 }
 
-fn mul(codes: &mut Vec<usize>, pos: usize, modes_string: &str) {
+fn mul(codes: &mut Vec<isize>, pos: &mut usize, modes_string: &str) {
     let modes = usize::from_str_radix(modes_string, 2).unwrap();
     let mode_a = modes & 0b1;
     let mode_b = modes & 0b10;
-    let a: usize = match mode_a {
-        0 => codes[codes[pos + 1]],
-        _ => codes[pos + 1],
+    let a: isize = match mode_a {
+        0 => codes[codes[*pos + 1] as usize],
+        _ => codes[*pos + 1],
     };
 
-    let b: usize = match mode_b {
-        0 => codes[codes[pos + 2]],
-        _ => codes[pos + 2],
+    let b: isize = match mode_b {
+        0 => codes[codes[*pos + 2] as usize],
+        _ => codes[*pos + 2],
     };
-    let target = codes[pos + 3];
+    let target = codes[*pos + 3] as usize;
+    *pos += 4;
     codes[target] = a * b;
 }
 
+fn input(codes: &mut Vec<isize>, pos: &mut usize) {
+    let mut input = String::new();
+    match io::stdin().read_line(&mut input) {
+        Ok(_n) => {
+            println!("{} was inputed", input.trim());
+        }
+        Err(_error) => {
+            panic!("Could not read from stdin");
+        }
+    }
+
+    let position = codes[*pos+1] as usize;
+    codes[position] = input.trim().parse().unwrap();
+    *pos += 2;
+}
+
+fn output(codes: &mut Vec<isize>, pos: &mut usize) {
+    println!("Output: {}", codes[codes[*pos+1] as usize]);
+    *pos += 2;
+}
+
 #[allow(dead_code)]
-fn str_to_ints(input: &str) -> Vec<usize> {
+fn str_to_ints(input: &str) -> Vec<isize> {
     input.split(',').map(|x| x.parse().unwrap()).collect()
 }
 
